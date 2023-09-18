@@ -8,7 +8,7 @@ import pandas as pd
 import math
 
 class Dataset(object):
-    def __init__(self, dir_dataset, data_frame,
+    def __init__(self, dir_dataset, data_frame, input_shape=(3, 512, 512),
                  augmentation=True, preallocate=True, inference=False, wsi_list=[], config=0):
 
         self.dir_dataset = dir_dataset
@@ -18,7 +18,7 @@ class Dataset(object):
         self.preallocate = preallocate
         self.inference = inference
         self.wsi_list = wsi_list
-        self.images = []
+        self.input_shape = input_shape
         self.images_400x = []
         self.images_100x = []
         self.images_25x = []
@@ -153,6 +153,10 @@ class Dataset(object):
 
         if self.preallocate:
             # Load, and normalize images
+            self.X400 = np.zeros((len(self.images_400x), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype=np.float32)
+            self.X100 = np.zeros((len(self.images_400x), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype=np.float32)
+            self.X25 = np.zeros((len(self.images_400x), self.input_shape[0], self.input_shape[1], self.input_shape[2]), dtype=np.float32)
+
             print('[INFO]: Training on ram: Loading images')
             for i in np.arange(len(self.indexes)):
                 print(str(i) + '/' + str(len(self.indexes)), end='\r')
@@ -170,9 +174,9 @@ class Dataset(object):
                 x25 = np.transpose(x25, (2, 0, 1))
 
                 # Normalization
-                self.x400[self.indexes[i], :, :, :] = x400 / 255
-                self.x100[self.indexes[i], :, :, :] = x100 / 255
-                self.x25[self.indexes[i], :, :, :] = x25 / 255
+                self.X400[self.indexes[i], :, :, :] = x400 / 255
+                self.X100[self.indexes[i], :, :, :] = x100 / 255
+                self.X25[self.indexes[i], :, :, :] = x25 / 255
             print('[INFO]: Images loaded')
 
     def __len__(self):
