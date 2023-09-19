@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 import torchvision
 import kornia
-from losses import SupConLoss
+from losses_con import SupConLoss
 from dataset_multiscale import *
 
 torch.cuda.empty_cache()
