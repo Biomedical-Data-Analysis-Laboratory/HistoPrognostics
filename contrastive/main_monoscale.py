@@ -299,11 +299,10 @@ for config in config_run_list:
 
             # If there are no tiles, skip to the next one
             if roi_choice == 'anno' and not os.path.isdir(wsi_folder): continue
-            if len(os.listdir(os.path.join(wsi_folder, '400x'))) == 0: continue
+            if len(os.listdir(wsi_folder)) == 0: continue
 
             # Just use this to know we are working on it
             np.save(output_dataset_directory + filename + '.npy', np.zeros((1, 1)))
-            np.save(output_dataset_directory + filename + '_labels.npy', np.zeros((1, 1)))
 
             # Set up current WSI data
             dataset_wsi = Dataset(wsi_folder, clinical_dataframe, input_shape=input_shape, augmentation=False,
@@ -336,5 +335,4 @@ for config in config_run_list:
             # Convert list to numpy and save it in output dataset directory
             if len(wsi_embeddings_list) == 0: continue
             np.save(output_dataset_directory + filename + '.npy', np.vstack(wsi_embeddings_list))
-            np.save(output_dataset_directory + filename + '_labels.npy', wsi_generator.dataset.Y)
 

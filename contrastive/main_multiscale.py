@@ -339,7 +339,6 @@ for config in config_run_list:
 
             # Just use this to know we are working on it
             np.save(output_dataset_directory + filename + '.npy', np.zeros((1,1)))
-            np.save(output_dataset_directory + filename + '_labels.npy', np.zeros((1,1)))
 
             # Set up current WSI data
             dataset_wsi = Dataset(wsi_folder, clinical_dataframe, input_shape=input_shape, augmentation=False,
@@ -383,5 +382,4 @@ for config in config_run_list:
             # Convert list to numpy and save it in output dataset directory
             if len(wsi_embeddings_list) == 0: continue
             np.save(output_dataset_directory + filename + '.npy', np.vstack(wsi_embeddings_list))
-            np.save(output_dataset_directory + filename + '_labels.npy', wsi_generator.dataset.Y)
 
