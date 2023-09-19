@@ -6,7 +6,7 @@ This is the source code described in the paper "Histopathological Deep Learning-
 We present a systematic study of technical solutions using deep learning and histopathological images to predict Bacillus Calmette–Guérin (BCG) response in high-risk muscle-invasive bladder cancers (HR-NMIBC) patients. We investigated various regions of interest within the slides and explored different learning scenarios. The study did not find a satisfactory solution using the available resources. The authors suggest that future studies should explore alternative approaches to address this challenge. Despite the challenges faced, this study provides important insights into the complexity of predicting BCG response in HR-NMIBC patients, and highlights the need for continued research in this area.
 
 <p align="center">
-    <img src="images/pipeline overview.pdf">
+    <img src="images/pipeline overview.png">
 </p>
 
 ### 2 - How to use
@@ -36,7 +36,7 @@ This codebase implements a two-part framework for image analysis: a contrastive 
 - Ensure that you have the required dependencies listed in the `requirements.txt` file.
 
 <p align="center">
-    <img src="images/heatmap.pdf">
+    <img src="images/heatmap.png">
 </p>
 
 ### 3 - Link to paper
