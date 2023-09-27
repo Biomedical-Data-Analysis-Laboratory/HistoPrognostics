@@ -549,20 +549,6 @@ class MontecarloInf():
                        'acc_ins': np.round(0.0, 4),
                        'f1_ins': np.round(0.0, 4), 'k2_ins': np.round(0.0, 4),
                        }
-        """
-            Y = self.test_generator.dataset.y_instances
-            clinical_data = self.test_generator.dataset.clinical_data
-            acc, f1, k2 = self.test_instance_level_classification(None, Y, clinical_data, self.test_generator.dataset.classes)
-        """
-
-        """
-        metrics = {'epoch': self.best_epoch, 'AUCtest': np.round(macro_auc_test, 4), 'acc_test': np.round(acc_test, 4),
-                    'f1_test': np.round(f1_test, 4), 'k2_test': np.round(k2_test, 4),
-                    'AUCval': np.round(macro_auc_val, 4), 'acc_val': np.round(acc_val, 4),
-                    'f1_val': np.round(f1_val, 4), 'k2_val': np.round(k2_val, 4), 'acc_ins': np.round(acc, 4),
-                    'f1_ins': np.round(f1, 4), 'k2_ins': np.round(k2, 4),
-                    }
-        """
 
         with open(self.dir_results + self.iteration + 'mc_metrics.json', 'w') as fp:
             json.dump(metrics, fp)
@@ -604,14 +590,12 @@ class MontecarloInf():
     def test_instance_level_classification(self, X, Y, clinical_data, classes):
 
         self.network.eval()
-        # self.enable_dropout(self.network)
+        self.enable_dropout(self.network)
         print(['INFO: Testing at instance level...'])
 
         Yhat = []
-        # for iInstance in np.arange(0, X.shape[0]):
-        #     print(str(iInstance+1) + '/' + str(X.shape[0]), end='\r')
         for iInstance in np.arange(0, Y.shape[0]):
-            # print(str(iInstance+1) + '/' + str(Y.shape[0]), end='\r')
+            print(str(iInstance+1) + '/' + str(Y.shape[0]), end='\r')
 
             # Tensorize input
             if not self.test_generator.dataset.only_clinical:
@@ -628,44 +612,28 @@ class MontecarloInf():
                     # x = torch.tensor(X[iInstance,:]).cuda().float()
                     x = torch.tensor(X[iInstance]).cuda().float()
                 x = x.unsqueeze(0)
-            # clinical_data_id = torch.tensor(np.array(clinical_data[iInstance, :]).astype('float32')).cuda().float()
             clinical_data_id = torch.tensor(np.array(clinical_data[iInstance]).astype('float32')).cuda().float()
 
             # Make prediction
             if not self.test_generator.dataset.only_clinical:
 
                 if self.test_generator.dataset.backbone == 'contrastive':
-                    if not self.network.prototypical:
-                        yhat = torch.softmax(self.network.classifier(torch.squeeze(x)), 0)
-                    else:
-                        yhat = torch.softmax(- torch.cdist(torch.squeeze(x).unsqueeze(0), self.network.C, p=2.0), 1)
+                    yhat = torch.softmax(self.network.classifier(torch.squeeze(x)), 0)
 
                 elif self.network.only_images:
-                    if not self.network.prototypical:
-                        yhat = torch.softmax(self.network.classifier(torch.squeeze(self.network.bb(x))), 0)
-                    else:
-                        yhat = torch.softmax(
-                            - torch.cdist(torch.squeeze(self.network.bb(x)).unsqueeze(0), self.network.C, p=2.0), 1)
+                    yhat = torch.softmax(self.network.classifier(torch.squeeze(self.network.bb(x))), 0)
+                    
                 else:
-
-                    if not self.network.prototypical:
-                        yhat = torch.softmax(self.network.classifier(
-                            torch.squeeze(torch.cat((torch.reshape(self.network.bb(x), (512,)), clinical_data_id), 0))
-                        ), 0)
-                    else:
-                        yhat = torch.softmax(- torch.cdist(
-                            torch.squeeze(torch.cat((self.network.bb(x), clinical_data_id), 0)).unsqueeze(0),
-                            self.network.C, p=2.0), 1)
-
+                    yhat = torch.softmax(self.network.classifier(
+                        torch.squeeze(torch.cat((torch.reshape(self.network.bb(x), (512,)), clinical_data_id), 0))), 0)
             else:
-
+                
                 yhat = torch.softmax(self.network.classifier(torch.squeeze(clinical_data_id, 0)), 0)
 
             yhat = torch.argmax(yhat).detach().cpu().numpy()
             Yhat.append(yhat)
 
         Yhat = np.array(Yhat)
-        # Y = np.argmax(Y, 1)
 
         cr = classification_report(Y, Yhat, target_names=classes, digits=4, zero_division=0)
         acc = accuracy_score(Y, Yhat)
@@ -685,28 +653,24 @@ class MontecarloInf():
 
     def test_bag_level_classification(self, test_generator, binary):
         self.network.eval()
-        # self.enable_dropout(self.network)
+        self.enable_dropout(self.network)
         print('[VALIDATION]: at bag level...')
 
         # Loop over training dataset
         Y_all = []
         Yhat_all = []
         Lce_e = 0
-        for self.i_iteration, (X, Y, O, _, clinical_data, region_info) in enumerate(test_generator):
+        for self.i_iteration, (X, Y, clinical_data, region_info) in enumerate(test_generator):
             X = torch.tensor(X).cuda().float()
             Y = torch.tensor(Y).cuda().float()
             clinical_data = torch.tensor(clinical_data).cuda().float()
             region_info = torch.tensor(region_info).cuda().float()
 
-            # Set model to training mode and clear gradients
-
             # Forward network
             if self.test_generator.dataset.only_clinical:
                 Yhat = self.network(X, clinical_data)
             elif X is not None:
-                Yhat, _, _ = self.network(X, clinical_data, region_info)
-            else:
-                Yhat = self.network(X, clinical_data, region_info)
+                Yhat, _ = self.network(X, clinical_data, region_info)
             # Estimate losses
             Lce = self.L(Yhat, torch.squeeze(Y))
             Lce_e += Lce.cpu().detach().numpy() / len(test_generator)
@@ -726,15 +690,11 @@ class MontecarloInf():
                 macro_auc = roc_auc_score(Y_all, Yhat_all, multi_class='ovr')
 
                 # Metrics
-                # Yhat_mono = np.argmax(Yhat_all, 1)
                 Yhat_mono = np.zeros((len(Yhat_all),)).astype(np.int32)
                 for index, pred in enumerate(Yhat_all):
                     if pred[1] >= self.threshold:
                         Yhat_mono[index] = 1
                 Y_mono = np.argmax(Y_all, 1)  # softmax(Y_all, 1)[:,1]
-                print(Y_mono)
-                print(Yhat_mono)
-                # cr = classification_report(Y_mono, Yhat_mono, target_names=self.test_generator.dataset.classes, digits=4)
                 cr = classification_report(Y_mono, Yhat_mono, target_names=test_generator.dataset.classes, digits=4,
                                            zero_division=0)
                 # print(Y_mono)
@@ -754,7 +714,6 @@ class MontecarloInf():
 
                 print('Title\n\nClassification Report\n\n{}\n\nConfusion Matrix\n\n{}\n\nKappa\n\n{}\n'.format(cr, cm,
                                                                                                                k2))
-
             else:
 
                 macro_auc, acc, f1, k2, = 0.0, 0.0, 0.0, 0.0
