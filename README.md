@@ -1,4 +1,4 @@
-# HistoBCG
+# HistoPrognostics
 
 This is the source code described in the paper "Self-Contrastive Weakly Supervised Learning Framework for Prognostic Prediction Using Whole Slide Images" by Saul Fuster, Farbod Khoraminia, Julio Silva-Rodríguez, Umay Kiraz, Geert J. L. H. van Leenders, Trygve Eftestøl, Valery Naranjo, Emiel A.M. Janssen, Tahlita C.M. Zuiverloon, and Kjersti Engan  - under revision.
 
